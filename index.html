@@ -1,0 +1,100 @@
+(function() {
+  // ===== CUSTOM SETTINGS =====
+  const bgColor = "#ffffff"; // background color (hex)
+  const textColor = "#000000"; // text color (hex)
+
+  // ===== STATE =====
+  let lastSettings = null;
+
+  // ===== HELPER: create styled button =====
+  function makeButton(label, offsetX) {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    Object.assign(btn.style, {
+      position: "fixed",
+      top: "20px",
+      right: `${20 + offsetX}px`,
+      zIndex: 999999,
+      background: "#000",
+      color: "#fff",
+      border: "none",
+      borderRadius: "8px",
+      padding: "10px 14px",
+      fontSize: "14px",
+      fontFamily: "monospace",
+      cursor: "pointer",
+      opacity: "0.7",
+    });
+    btn.onmouseenter = () => (btn.style.opacity = "1");
+    btn.onmouseleave = () => (btn.style.opacity = "0.7");
+    document.body.appendChild(btn);
+    return btn;
+  }
+
+  // ===== CREATE BUTTONS =====
+  const setupBtn = makeButton("⚙ Set", 0);
+  const startBtn = makeButton("▶ Start", 80);
+
+  // ===== COUNTER FUNCTION =====
+  function runCounter(settings) {
+    const { duration, start, end } = settings;
+    const existing = document.getElementById("floating-counter-bg");
+    if (existing) existing.remove();
+
+    const bg = document.createElement("div");
+    bg.id = "floating-counter-bg";
+    Object.assign(bg.style, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: bgColor,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 999998,
+      fontSize: "10rem",
+      fontFamily: "monospace",
+      color: textColor,
+      transition: "opacity 0.5s",
+      userSelect: "none",
+    });
+    document.body.appendChild(bg);
+
+    let current = start;
+    const diff = end - start;
+    const stepTime = 10;
+    const steps = duration / stepTime;
+    const inc = diff / steps;
+
+    const interval = setInterval(() => {
+      current += inc;
+      if ((inc > 0 && current >= end) || (inc < 0 && current <= end)) {
+        current = end;
+        clearInterval(interval);
+        setTimeout(() => {
+          bg.style.opacity = "0";
+          setTimeout(() => bg.remove(), 500);
+        }, 500);
+      }
+      // Add commas using toLocaleString
+      bg.textContent = Math.round(current).toLocaleString();
+    }, stepTime);
+  }
+
+  // ===== EVENT HANDLERS =====
+  setupBtn.onclick = () => {
+    const duration = parseFloat(prompt("Duration (seconds):", "1")) * 1000;
+    const start = parseFloat(prompt("Start value:", "100"));
+    const end = parseFloat(prompt("End value:", "200"));
+    if (isNaN(duration) || isNaN(start) || isNaN(end)) return alert("Invalid input.");
+    lastSettings = { duration, start, end };
+    alert("Settings saved. Press 'Start' to run.");
+  };
+
+  startBtn.onclick = () => {
+    if (!lastSettings) return alert("No settings yet. Click 'Set' first.");
+    runCounter(lastSettings);
+  };
+})();
